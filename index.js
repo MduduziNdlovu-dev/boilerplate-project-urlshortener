@@ -14,9 +14,18 @@ const urls = []; // In-memory storage (use a DB later for production)
 
 app.post('/api/shorturl', (req, res) => {
   const originalUrl = req.body.url;
-  const parsedUrl = urlParser.parse(originalUrl);
 
-  // Check if the hostname exists via DNS
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(originalUrl);
+  } catch (err) {
+    return res.json({ error: 'invalid url' });
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    return res.json({ error: 'invalid url' });
+  }
+
   dns.lookup(parsedUrl.hostname, (err) => {
     if (err) {
       return res.json({ error: 'invalid url' });
@@ -27,6 +36,7 @@ app.post('/api/shorturl', (req, res) => {
     res.json({ original_url: originalUrl, short_url: shortUrl });
   });
 });
+
 
 app.get('/api/shorturl/:short_url', (req, res) => {
   const short = parseInt(req.params.short_url);
